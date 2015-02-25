@@ -8,6 +8,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import preprocessing
 from sklearn.metrics import roc_auc_score
 
+######################
+# Usage:
+# For submission:
+# python bin/train_predict.py submission data/
+# For test:
+# python bin/train_predict.py test data/
+
+
 cmd = sys.argv[1]
 directory = sys.argv[2]
 
@@ -52,14 +60,14 @@ if cmd != 'submission':
     test_roc = roc_auc_score(y_test, test_pred_probs)
     print(test_roc)
 else:
-    test_json_file = sys.argv[3]
-    f = open(test_json_file, 'r')
+    f = open(os.path.join(directory, 'test.json'), 'r')
     all_data = simplejson.loads(f.read())
-    request_ids = [x['requestor_id'] for x in all_data]
+    request_ids = [x['request_id'] for x in all_data]
  
     model = lr.fit(train, y_train)
 
     test_pred_probs = model.predict_proba(test)[:, 0]
-    submission = np.hstack(np.array(request_ids), np.array(test_pred_probs))
-    np.savetxt(os.path.join(outputdir + 'submission.csv'), submission, header='request_id,requester_received_pizza')
-
+    with open(os.path.join(directory, 'submission.csv'), 'w') as f:
+        f.write('request_id,requester_received_pizza\n')
+        for request_id, prob in zip(request_ids, test_pred_probs):
+            f.write("%s, %f\n" % (request_id, prob))

@@ -7,6 +7,14 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.cross_validation import train_test_split
 
+#####
+# Setup instructions: Create data/ directory in the the project directory
+# Download and place train.json and test.json inside it.
+# I added data/ to .gitignore so anything in it won't be added to git
+# Usage:
+# python bin/generate_dataset.py data/ data/
+#
+
 inputdir = sys.argv[1]
 outputdir = sys.argv[2]
 
@@ -91,7 +99,7 @@ update_feature_name_to_idx(
 )
 
 def build_features(data):
-    dict_array = dict_vectorizer.transform(dict_vector_data)
+    dict_array = dict_vectorizer.transform(data)
     dict_array = np.array(dict_array.toarray())
     
     bow_array = count_vectorizer.transform([x[rq_txt_key] for x in data])
@@ -102,17 +110,18 @@ def build_features(data):
 
     # add boolean feature - giver_user_name_if_known
     bool_array = np.array(
-        [x['giver_username_if_known'] != 'N/A' for x in all_data]
+        [x['giver_username_if_known'] != 'N/A' for x in data]
     )[:, np.newaxis]
 
     # subreddits features
+    # not using subreddits for now -- adding a lot of dimensions
     subreddits_array = subreddit_cnt_vectorizer.transform(
-        [" ".join(x['requester_subreddits_at_request']) for x in all_data]
+        [" ".join(x['requester_subreddits_at_request']) for x in data]
     )
     subreddits_array = np.array(subreddits_array.toarray())
     print(dict_array.shape, bow_array.shape, title_bow_array.shape, bool_array.shape, subreddits_array.shape)
 
-    return np.hstack([dict_array, bow_array, title_bow_array, bool_array, subreddits_array])
+    return np.hstack([dict_array, bow_array, title_bow_array, bool_array])
 
 def apply_transforms(features):
     # Apply transformations
